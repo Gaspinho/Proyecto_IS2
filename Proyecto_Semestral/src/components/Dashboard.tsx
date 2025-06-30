@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
-import { obtenerActividades, updateUserInterests } from '../services/interests';
+import { getUserInterests, updateInterestState } from '../services/interests';
 import { authService } from '../services/authService';
 import '../styles/Dashboard.css';
 import AddActividadModal from './AddActividadModal';
@@ -10,9 +10,7 @@ import AddActividadModal from './AddActividadModal';
 interface UserProfile {
   name: string;
   email: string;
-  interests: string[];
 }
-
 
 
 const Dashboard: React.FC = () => {
@@ -23,14 +21,12 @@ const Dashboard: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
-    email: '',
-    interests: []
+    email: ''
   });
   const [editingProfile, setEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState<UserProfile>({
     name: '',
-    email: '',
-    interests: []
+    email: ''
   });
   const [password, setPassword] = useState('');
   const [actividades, setActividades] = useState<any[]>([]);
@@ -65,7 +61,7 @@ const Dashboard: React.FC = () => {
     const cargarDatos = async () => {
       try {
         const userData = await userService.getProfile();
-        const data = await obtenerActividades();
+        const data = await getUserInterests();
 
         setProfile(userData);
         setEditedProfile(userData);
@@ -121,17 +117,11 @@ const Dashboard: React.FC = () => {
           className={`sidebar-button ${activeSection === 'interests' ? 'active' : ''}`}
           onClick={() => setActiveSection('interests')}
         >
-          Intereses
+          Mis Intereses
         </button>
         <button 
           className={`sidebar-button ${activeSection === 'myInterests' ? 'active' : ''}`}
           onClick={() => setActiveSection('myInterests')}
-        >
-          Mis Intereses
-        </button>
-        <button 
-          className="sidebar-button"
-          onClick={() => navigate('/')}
         >
           Volver al Inicio
         </button>
@@ -224,52 +214,26 @@ const Dashboard: React.FC = () => {
                 <label key={actividad.id} className="interest-item">
                   <input
                     type="checkbox"
-                    checked={editedProfile.interests.includes(actividad.name)}
-                    onChange={(e) => {
-                      const newInterests = e.target.checked
-                        ? [...editedProfile.interests, actividad.name]
-                        : editedProfile.interests.filter(i => i !== actividad.name);
-                      setEditedProfile({
-                        ...editedProfile,
-                        interests: newInterests
-                      });
+                    checked={actividad.estado}
+                    onChange={async (e) => {
+                      const nuevoEstado = e.target.checked;
+                      try {
+                        await updateInterestState(actividad.id, nuevoEstado);
+                        // Actualizamos localmente el estado de esa actividad
+                        setActividades((prev) =>
+                          prev.map((a) =>
+                            a.id === actividad.id ? { ...a, estado: nuevoEstado } : a
+                          )
+                        );
+                        setMessage('Estado actualizado correctamente');
+                      } catch (err) {
+                        setError('Error al cambiar el estado');
+                      }
                     }}
                   />
                   {actividad.name}
                 </label>
               ))}
-            </div>
-            <button onClick={async () => {
-              try {
-                await updateUserInterests(editedProfile.interests);
-                setProfile({ ...profile, interests: editedProfile.interests });
-                setMessage('Intereses actualizados correctamente');
-                setError(null);
-              } catch (error) {
-                setMessage(null);
-                setError('No se pudieron actualizar los intereses');
-
-              }
-            }}>
-              Actualizar Intereses
-            </button>
-          </div>
-        )}
-
-        {activeSection === 'myInterests' && (
-          <div className="interests-section">
-            <h2>Mis Intereses</h2>
-            <div className="interests-grid">
-              {actividades
-                .filter((actividad) => editedProfile.interests.includes(actividad.name))
-                .map((actividad) => (
-                  <div key={actividad.id} className="interest-item">
-                    {actividad.name}
-                  </div>
-                ))}
-              {editedProfile.interests.length === 0 && (
-                <p>No tienes intereses seleccionados.</p>
-              )}
             </div>
             <button
               className="add-interest-button"

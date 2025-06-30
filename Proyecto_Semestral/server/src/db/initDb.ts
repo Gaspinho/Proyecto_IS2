@@ -45,12 +45,6 @@ async function initializeDatabase() {
         await appPool.query(sqlFile);
         console.log('Tablas creadas correctamente');
 
-        // Ejecutar el script de inserción de intereses
-        const insertPath = path.join(__dirname, 'insert_interests.sql');
-        const insertFile = fs.readFileSync(insertPath, 'utf8');
-        await appPool.query(insertFile);
-        console.log('Intereses insertados correctamente');
-
         await appPool.end();
         console.log('Base de datos inicializada correctamente');
     } catch (error) {

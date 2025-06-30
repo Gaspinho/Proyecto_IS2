@@ -32,7 +32,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   const client = await pool.connect();
   try {
     const userId = req.user.id;
-    const { name, email, password, interests } = req.body;
+    const { name, email, password } = req.body;
 
     await client.query('BEGIN');
 
@@ -48,25 +48,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         'UPDATE users SET name = $1, email = $2 WHERE id = $3',
         [name, email, userId]
       );
-    }
-
-    // Actualizar intereses
-    if (interests) {
-      // Eliminar intereses actuales
-      await client.query('DELETE FROM user_interests WHERE user_id = $1', [userId]);
-
-      // Insertar nuevos intereses
-      for (const interest of interests) {
-        const interestResult = await client.query(
-          'SELECT id FROM interests WHERE name = $1',
-          [interest]
-        );
-        const interestId = interestResult.rows[0].id;
-        await client.query(
-          'INSERT INTO user_interests (user_id, interest_id) VALUES ($1, $2)',
-          [userId, interestId]
-        );
-      }
     }
 
     await client.query('COMMIT');

@@ -20,7 +20,6 @@ export const userService = {
     name: string;
     email: string;
     password?: string;
-    interests: string[];
   }) {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/profile`, {

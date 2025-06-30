@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { obtenerActividades, updateUserInterests } from '../services/interests';
+import { createInterest } from '../services/interests';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import '../styles/Auth.css';
@@ -13,25 +13,29 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [interesesElegidos, setInterests] = useState<any[]>([]);
-  const [actividades, setActividades] = useState<any[]>([]);
+  const [interesesElegidos, setInterests] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchActividades = async () => {
-      try {
-        const data = await obtenerActividades();
-        setActividades(data);
-      } catch (error) {
-        console.error("Error al obtener actividades:", error);
-      }
-    };
-    fetchActividades();
-  }, []);
+  const sugerenciasIniciales = [
+    { name: "Ciclismo" },
+    { name: "Escalada" },
+    { name: "Natación" },
+    { name: "Futbol" },
+    { name: "Trotar" },
+    { name: "Yoga" },
+    { name: "Senderismo" },
+    { name: "Surf" },
+    { name: "Bailar" },
+    { name: "Correr" },
+    { name: "Gimnasio" },
+    { name: "Boxeo" },
+    { name: "Fotografía" },
+    { name: "Jardinería" }
+];
 
-  const handleInterestChange = (actividad: any) => {
+  const handleInterestChange = (actividad: string) => {
     setInterests(prev =>
-      prev.some(i => i.id === actividad.id)
-        ? prev.filter(i => i.id !== actividad.id)
+      prev.includes(actividad)
+        ? prev.filter(i => i !== actividad)
         : [...prev, actividad]
     );
   };
@@ -71,8 +75,13 @@ const RegisterPage = () => {
       const token = await authService.login(email, password); 
       if (token) {
         localStorage.setItem('token', token);
-        const interesesNombres = interesesElegidos.map(i => i.name);
-        await updateUserInterests(interesesNombres);
+
+        for (const actividad of interesesElegidos) {
+          await createInterest({
+            name: actividad,
+          });
+        }
+
         navigate('/');
       }
     } catch (err) {
@@ -80,7 +89,6 @@ const RegisterPage = () => {
       console.error(err);
     }
   };
-
   return (
     <div className="page-container">
       <Navbar showSearchBar={false} />
@@ -134,12 +142,12 @@ const RegisterPage = () => {
             <div className="form-group">
               <label>Intereses:</label>
               <div className="interests-grid">
-                {actividades.map((actividad) => (
-                  <label key={actividad.id}>
+                { sugerenciasIniciales.map((actividad, index) => (
+                  <label key={index}>
                     <input
                       type="checkbox"
-                      checked={interesesElegidos.some(i => i.id === actividad.id)}
-                      onChange={() => handleInterestChange(actividad)}
+                      checked={interesesElegidos.includes(actividad.name)}
+                      onChange={() => handleInterestChange(actividad.name)}
                     />
                     {actividad.name}
                   </label>

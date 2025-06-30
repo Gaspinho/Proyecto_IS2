@@ -1,15 +1,20 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { getAllInterests, updateUserInterests, getUserInterests, getUserInterestsById } from '../controllers/interests';
-
+import {
+  getUserInterests,
+  getOnUserInterests,
+  createInterest,
+  updateInterest,
+  deleteInterest,
+  updateInterestState
+} from '../controllers/interests';
 const router = express.Router();
 
-// Rutas públicas
-router.get('/', getAllInterests);  // GET /api/interests
-
-// Rutas protegidas
-router.put('/', authenticateToken, updateUserInterests);  // PUT /api/interests
-router.get('/user', authenticateToken, getUserInterests); // GET /api/interests/user
-router.get('/user/:userId', authenticateToken, getUserInterestsById); // GET /api/interests/user/:userId
+router.get('/all', authenticateToken, getUserInterests);
+router.get('/', authenticateToken, getOnUserInterests);
+router.post('/', authenticateToken, createInterest);
+router.put('/:id', authenticateToken, updateInterest);
+router.delete('/:id', authenticateToken, deleteInterest);
+router.patch('/:id/estado', authenticateToken, updateInterestState);
 
 export default router;
